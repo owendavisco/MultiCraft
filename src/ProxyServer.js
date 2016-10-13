@@ -18,7 +18,7 @@ class ProxyServer extends EventEmitter {
 
         for (let server of servers) {
             self.servers[serverId] = net.connect(server.port, server.host, function(){
-                console.log("Connected To Server");
+                console.log("Connected to server");
             });
             serverId++;
         }
@@ -28,15 +28,25 @@ class ProxyServer extends EventEmitter {
             console.log("Connection received");
             self.clients[clientId] = socket;
 
-            socket.pipe(self.servers[0]);
-            self.servers[0].pipe(socket);
+            socket.on('data', data => {
+                self.servers[0].write(data);
 
-            // socket.on('data', data => {
-            //    for (let i = 0; i < serverId; i++) {
-            //        var server = self.servers[0];
-            //        server.write(data);
-            //    }
-            // });
+                let dataString = "";
+                for (let dataPoint of data) {
+                    dataString += (dataPoint.toString(16) + " ");
+                }
+                console.log("Data from client: " + dataString);
+            });
+
+            self.servers[0].on('data', data => {
+                socket.write(data);
+
+                let dataString = "";
+                for (let dataPoint of data) {
+                    dataString += (dataPoint.toString(16) + " ");
+                }
+                console.log("Data from server: " + dataString);
+            });
 
             self.socketServer.on('error', err => {
                 self.emit('error', err);
@@ -58,10 +68,6 @@ function main() {
     const server = new ProxyServer();
     server.listen(8080, [{
             'port': 25565,
-            'host': 'localhost'
-        },
-        {
-            'port': 25564,
             'host': 'localhost'
         }]);
 }
