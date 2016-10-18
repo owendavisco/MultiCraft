@@ -1,6 +1,7 @@
 'use strict';
 
 const net = require('net');
+const debug = require('debug')('MultiCraft:ProxyServer');
 const EventEmitter = require('events').EventEmitter;
 
 class ProxyServer extends EventEmitter {
@@ -64,12 +65,12 @@ class ProxyServer extends EventEmitter {
 
 module.exports = ProxyServer;
 
-function main() {
-    const server = new ProxyServer();
-    server.listen(8080, [{
-            'port': 25565,
-            'host': 'localhost'
-        }]);
-}
-
-main();
+// function main() {
+//     const server = new ProxyServer();
+//     server.listen(8080, [{
+//             'port': 25565,
+//             'host': 'localhost'
+//         }]);
+// }
+//
+// main();
