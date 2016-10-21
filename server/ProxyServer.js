@@ -8,69 +8,41 @@ class ProxyServer extends EventEmitter {
     constructor() {
         super();
         this.clients = {};
-        this.servers = {};
         this.socketServer = null;
     }
 
-    listen(port, servers) {
+    listen(port, server) {
         const self = this;
         let clientId = 0;
-        let serverId = 0;
-
-        for (let server of servers) {
-            self.servers[serverId] = net.connect(server.port, server.host, function(){
-                console.log("Connected to server");
-            });
-            serverId++;
-        }
 
         self.socketServer = net.createServer();
         self.socketServer.on('connection', socket => {
-            console.log("Connection received");
+            console.log(`Connected to client with hostname:port - ${socket.localAddress}:${socket.localPort}`);
             self.clients[clientId] = socket;
 
-            socket.on('data', data => {
-                self.servers[0].write(data);
+            socket.state = 'login';
+            socket.id = clientId;
 
-                let dataString = "";
-                for (let dataPoint of data) {
-                    dataString += (dataPoint.toString(16) + " ");
-                }
-                console.log("Data from client: " + dataString);
+            let serverConnection = net.createConnection(server.port, server.host, () => {
+                console.log(`Connected to server with hostname:port - ${server.host}:${server.port}`);
             });
 
-            self.servers[0].on('data', data => {
-                socket.write(data);
+            clientId++;
 
-                let dataString = "";
-                for (let dataPoint of data) {
-                    dataString += (dataPoint.toString(16) + " ");
-                }
-                console.log("Data from server: " + dataString);
-            });
-
-            self.socketServer.on('error', err => {
-                self.emit('error', err);
-            });
-            self.socketServer.on('close', () => {
-                self.emit('close');
-            });
-            self.socketServer.on('listening', () => {
-                self.emit('listening');
-            });
+            self.emit('connection', socket, serverConnection);
         });
+        self.socketServer.on('error', err => {
+            self.emit('error', err);
+        });
+        self.socketServer.on('close', () => {
+            self.emit('close');
+        });
+        self.socketServer.on('listening', () => {
+            self.emit('listening');
+        });
+
         self.socketServer.listen(port);
     }
 }
 
 module.exports = ProxyServer;
-
-// function main() {
-//     const server = new ProxyServer();
-//     server.listen(8080, [{
-//             'port': 25565,
-//             'host': 'localhost'
-//         }]);
-// }
-//
-// main();
