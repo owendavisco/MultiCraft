@@ -10,25 +10,32 @@ class VarNum {
     }
 
     static readVarNum(byteArray, maxBytes) {
-        let readAnotherByte = byteArray[0] & 128;;
-        let resultInt = readAnotherByte > 1 ? readAnotherByte : 1;
+        let readAnotherByte = (byteArray[0] & 128) >> 7;
+        let resultInt = readAnotherByte == 0 ? byteArray[0] & 127 : '';
         let currentByte = 0;
         let i = 0;
 
-        while(readAnotherByte) {
-            currentByte = parseInt(byteArray[i], 2);
-            resultInt = resultInt | ((currentByte & 127) << (7 * i));
-            readAnotherByte = currentByte & 128;
-            i += 1;
+        let stack = [];
 
-            byteArray = byteArray.slice(1);
+        while(readAnotherByte) {
+            currentByte = (byteArray[i] & 127).toString(2);
+            currentByte = '0'.repeat(7-currentByte.length) + currentByte;
+            stack.push(currentByte);
+
+            readAnotherByte = (byteArray[i] & 128) >> 7;
 
             if(maxBytes && i > maxBytes) {
                 throw RangeException(`VarNum exceeded max range of ${maxBytes} bytes`);
             }
+
+            i++;
         }
 
-        return resultInt;
+        while(stack.length > 0) {
+            resultInt += stack.pop();
+        }
+
+        return parseInt(resultInt, 2);
     }
 }
 

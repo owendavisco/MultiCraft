@@ -9,7 +9,7 @@ class BasePacket {
     }
 
     static getBinaryFromByteArray(byteArray) {
-        let binaryValue = ''
+        let binaryValue = '';
         for (let byte of byteArray) {
             binaryValue += byte
         }

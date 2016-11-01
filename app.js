@@ -58,13 +58,16 @@ function onListening() {
     var addr = server.address();
     var bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
 
-    proxyServer = createProxyServer(8080);
+    proxyServer = createProxyServer(8080, {
+        'host': '192.168.1.3',
+        'port': 25565
+    });
     setTimeout(test, 10000);
 }
 
 function test() {
     proxyServer.migrateServer({
-        'host': 'localhost',
+        'host': '192.168.1.3',
         'port': 25564
     });
 }
