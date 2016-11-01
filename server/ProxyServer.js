@@ -8,12 +8,15 @@ class ProxyServer extends EventEmitter {
     constructor() {
         super();
         this.connections = {};
+        this.mincraftServer = null;
         this.socketServer = null;
     }
 
     listen(port, server) {
         const self = this;
         let connectionId = 0;
+
+        self.minecraftServer = server;
 
         self.socketServer = net.createServer();
         self.socketServer.on('connection', socket => {
@@ -23,8 +26,8 @@ class ProxyServer extends EventEmitter {
 
             socket.state = 'login';
 
-            let serverConnection = net.createConnection(server.port, server.host, () => {
-                console.log(`Connected to server with hostname:port - ${server.host}:${server.port}`);
+            let serverConnection = net.createConnection(self.minecraftServer.port, self.minecraftServer.host, () => {
+                console.log(`Connected to server with hostname:port - ${self.minecraftServer.host}:${self.minecraftServer.port}`);
             });
             self.connections[connectionId].server = serverConnection;
 

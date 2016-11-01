@@ -11,8 +11,6 @@ function createProxyServer(port, minecraft) {
 
     var proxyServer = new ProxyServer();
 
-    var clientBuffers = {};
-
     proxyServer.listen(proxyPort, minecraftServer);
     console.log(`Listening on port ${proxyPort}`);
 
@@ -21,6 +19,7 @@ function createProxyServer(port, minecraft) {
     proxyServer.on('migrateServer', (newServerOptions) => {
         let currentConnection;
         let newServer, oldServer;
+        proxyServer.minecraftServer = newServerOptions;
         for(let connId in proxyServer.connections) {
             currentConnection = proxyServer.connections[connId];
 
