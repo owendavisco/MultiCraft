@@ -52,10 +52,19 @@ function onError(error) {
   }
 }
 
+var proxyServer;
+
 function onListening() {
     var addr = server.address();
     var bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
-    debug('Listening on ' + bind);
 
-    createProxyServer();
+    proxyServer = createProxyServer(8080);
+    setTimeout(test, 10000);
+}
+
+function test() {
+    proxyServer.migrateServer({
+        'host': 'localhost',
+        'port': 25564
+    });
 }

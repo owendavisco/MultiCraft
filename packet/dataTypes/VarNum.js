@@ -10,8 +10,8 @@ class VarNum {
     }
 
     static readVarNum(byteArray, maxBytes) {
-        let readAnotherByte = 1;
-        let resultInt = 0;
+        let readAnotherByte = byteArray[0] & 128;;
+        let resultInt = readAnotherByte > 1 ? readAnotherByte : 1;
         let currentByte = 0;
         let i = 0;
 

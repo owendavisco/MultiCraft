@@ -3,55 +3,88 @@
 const ProxyServer = require('./ProxyServer');
 const BasePacket = require('../packet/BasePacket');
 const VarNum = require('../packet/dataTypes/VarNum');
+const net = require('net');
+const crypto = require('crypto');
 
-function createProxyServer(options) {
-    options = options || {};
-    let minecraftServer = { 'host':'localhost', 'port':25565 };
-    let proxyPort = options.port || 8080;
+function createProxyServer(port, minecraft) {
+    let minecraftServer = minecraft || { 'host':'localhost', 'port':25565 };
+    let proxyPort = port;
 
     var proxyServer = new ProxyServer();
-    var serverBuffer = [];
-    var clientBuffer = [];
 
-    var packetCount = 0;
+    var clientBuffers = {};
 
     proxyServer.listen(proxyPort, minecraftServer);
+    console.log(`Listening on port ${proxyPort}`);
 
-    proxyServer.on('connection', (client, server) => {
+    proxyServer.on('connection', handleConnPipeline);
 
-        function printBuffer(array, name) {
-            let currentPacket;
-            for(let i = 0; i < array.length; i++) {
-                currentPacket = array[i];
-                let str = '';
-                for (let e of currentPacket) {
-                    str += e.toString(2) + ' ';
-                }
-                console.log(`${name} ${i} (length ${currentPacket.length}): ${str}`);
-            }
+    proxyServer.on('migrateServer', (newServerOptions) => {
+        let currentConnection;
+        let newServer;
+        for(let connId in proxyServer.connections) {
+            currentConnection = proxyServer.connections[connId];
+            // clientBuffers[connId] = [];
+
+            newServer = net.createConnection(newServerOptions.port, newServerOptions.host, () => {
+                console.log(`Connected to new server with hostname:port - ${newServerOptions.host}:${newServerOptions.port}`);
+            });
+
+            currentConnection.server = newServer;
+
+            handleClientLogin(currentConnection.client, currentConnection.server);
+
+            // currentConnection.client.on('data', data => {
+            //     clientBuffers[connId].push(data);
+            // });
         }
-
-        server.on('data', data => {
-            serverBuffer.push(data);
-            client.write(data);
-
-            if(serverBuffer.length == 2) {
-                console.log('Printing Server Packets');
-                printBuffer(serverBuffer, 'Server');
-            }
-        });
-        client.on('data', data => {
-            clientBuffer.push(data);
-            server.write(data);
-
-            if(clientBuffer.length == 3) {
-                console.log('Printing Client Packets');
-                printBuffer(clientBuffer, 'Client');
-            }
-        });
     });
 
     return proxyServer;
+}
+
+function handleClientLogin(client, server) {
+    let currentState = 'start';
+    let publicKey;
+    let verifyToken;
+    server.write(client.loginPacket);
+    server.on('data', data => {
+        if(currentState == 'start') {
+
+        }
+    });
+}
+
+function handleConnPipeline(client, server) {
+
+    function printBuffer(array, name) {
+        let currentPacket;
+        for(let i = 0; i < array.length; i++) {
+            currentPacket = array[i];
+            let str = '';
+            let packetStr = '';
+            for (let e of currentPacket) {
+                packetStr = e.toString(2);
+                str += ('0'.repeat(8-packetStr.length) + packetStr) + ' ';
+            }
+            console.log(`${name} ${i} (length ${currentPacket.length}): ${str}`);
+        }
+    }
+
+    server.on('data', data => {
+        if(!client.destroyed) {
+            client.write(data);
+        }
+    });
+    client.on('data', data => {
+        if(!server.destroyed) {
+            if (client.state == 'login') {
+                client.loginPacket = data;
+                client.state = 'play';
+            }
+            server.write(data);
+        }
+    });
 }
 
 module.exports = createProxyServer;

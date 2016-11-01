@@ -7,29 +7,30 @@ const EventEmitter = require('events').EventEmitter;
 class ProxyServer extends EventEmitter {
     constructor() {
         super();
-        this.clients = {};
+        this.connections = {};
         this.socketServer = null;
     }
 
     listen(port, server) {
         const self = this;
-        let clientId = 0;
+        let connectionId = 0;
 
         self.socketServer = net.createServer();
         self.socketServer.on('connection', socket => {
             console.log(`Connected to client with hostname:port - ${socket.localAddress}:${socket.localPort}`);
-            self.clients[clientId] = socket;
+            self.connections[connectionId] = {};
+            self.connections[connectionId].client = socket;
 
             socket.state = 'login';
-            socket.id = clientId;
 
             let serverConnection = net.createConnection(server.port, server.host, () => {
                 console.log(`Connected to server with hostname:port - ${server.host}:${server.port}`);
             });
+            self.connections[connectionId].server = serverConnection;
 
-            clientId++;
+            self.emit('connection', socket, serverConnection, connectionId);
 
-            self.emit('connection', socket, serverConnection);
+            connectionId++;
         });
         self.socketServer.on('error', err => {
             self.emit('error', err);
@@ -42,6 +43,10 @@ class ProxyServer extends EventEmitter {
         });
 
         self.socketServer.listen(port);
+    }
+
+    migrateServer(newServer) {
+        this.emit('migrateServer', newServer);
     }
 }
 
