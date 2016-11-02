@@ -20,6 +20,10 @@ function createProxyServer(port, minecraft) {
         let currentConnection;
         let newServer, oldServer;
         proxyServer.minecraftServer = newServerOptions;
+
+        for(let connId in proxyServer.connections) {
+            bufferClientWrites(proxyServer.connections[connId].client, proxyServer.connections[connId].server);
+        }
         for(let connId in proxyServer.connections) {
             currentConnection = proxyServer.connections[connId];
 
@@ -27,27 +31,44 @@ function createProxyServer(port, minecraft) {
                 console.log(`Connected to new server with hostname:port - ${newServerOptions.host}:${newServerOptions.port}`);
             });
 
-            oldServer = currentConnection.server
             currentConnection.server = newServer;
 
-            handleClientLogin(currentConnection.client, currentConnection.server, oldServer);
+            handleClientLogin(currentConnection.client, currentConnection.server);
         }
     });
 
     return proxyServer;
 }
 
-function handleClientLogin(client, server, oldServer) {
+function bufferClientWrites(client, oldServer) {
+    oldServer.removeAllListeners();
+    client.removeAllListeners();
+
+    oldServer.destroy();
+
+    client.packetBuffer = [];
+    client.on('data', data => {
+        client.packetBuffer.push(data);
+    });
+}
+
+function handleClientLogin(client, server) {
     let isComplete = false;
     let currentPackets = 0;
+
     server.write(client.loginPacket);
     server.on('data', data => {
         if(!isComplete && data.length >= 256) {
+            let clientBuffer = client.packetBuffer;
+            for(let packet of clientBuffer) {
+                server.write(packet);
+            }
             client.write(data);
             handleConnPipeline(client, server);
-
-            oldServer.destroy();
+            client.packetBuffer = [];
             isComplete = true;
+
+            console.log('Client server migration completed!');
         }
         currentPackets++;
     });
@@ -77,6 +98,7 @@ function printBufferAsInt(array, name) {
         }
         console.log(`${name} ${i} (length ${currentPacket.length}): ${str}`);
     }
+
 }
 
 function handleConnPipeline(client, server) {
