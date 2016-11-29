@@ -74,33 +74,6 @@ function handleClientLogin(client, server) {
     });
 }
 
-function printBuffer(array, name) {
-    let currentPacket;
-    for(let i = 0; i < array.length; i++) {
-        currentPacket = array[i];
-        let str = '';
-        let packetStr = '';
-        for (let e of currentPacket) {
-            packetStr = e.toString(2);
-            str += ('0'.repeat(8-packetStr.length) + packetStr) + ' ';
-        }
-        console.log(`${name} ${i} (length ${currentPacket.length} ${currentPacket.time}): ${str}`);
-    }
-}
-
-function printBufferAsInt(array, name) {
-    let currentPacket;
-    for(let i = 0; i < array.length; i++) {
-        currentPacket = array[i];
-        let str = '';
-        for (let e of currentPacket) {
-            str += (e.toString() + ' ');
-        }
-        console.log(`${name} ${i} (length ${currentPacket.length}): ${str}`);
-    }
-
-}
-
 function handleConnPipeline(client, server) {
     client.removeAllListeners();
     server.removeAllListeners();

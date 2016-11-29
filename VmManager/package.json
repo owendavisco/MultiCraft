@@ -1,5 +1,5 @@
 {
-  "name": "MultiCraft",
+  "name": "VmManager",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "debug": "~2.2.0",
-    "express": "~4.13.4"
+    "express": "~4.13.4",
+    "aws-sdk": "~2.7.7"
   }
 }
