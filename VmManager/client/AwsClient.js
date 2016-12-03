@@ -16,7 +16,7 @@ class AwsClient {
         this.cloudWatch = new AWS.CloudWatch(config);
 
         this.ec2Params = {
-            ImageId: 'ami-1624987f',
+            ImageId: 'ami-b73b63a0',
             InstanceType: defaultInstanceType,
             Monitoring: {
                 Enabled: true
