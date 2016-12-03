@@ -5,7 +5,7 @@ const AWS = require('aws-sdk');
 const fs = require('fs');
 
 const awsDefaultConfig = { region: 'us-east-1' };
-const defaultInstanceType = 't1.micro';
+const defaultInstanceType = 't2.micro';
 const usrData = new Buffer(fs.readFileSync('./script/Startup.sh')).toString('base64');
 
 class AwsClient {

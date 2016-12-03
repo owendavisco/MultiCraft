@@ -6,7 +6,7 @@ var awsClient = require('./client/AwsClient');
 var app = express();
 
 var client = new awsClient();
-client.createEc2Instance('t1.micro', function(instanceId) {
+client.createEc2Instance('t2.micro', function(instanceId) {
    console.log(`Created instance with id ${instanceId}`);
 });
 
