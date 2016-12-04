@@ -7,7 +7,7 @@ const METRIC = require('./Metrics');
 
 const awsDefaultConfig = { region: 'us-east-1' };
 const defaultInstanceType = 't2.micro';
-const usrData = new Buffer(fs.readFileSync('./script/Startup.sh')).toString('base64');
+// const usrData = new Buffer(fs.readFileSync('./script/Startup.sh')).toString('base64');
 
 class AwsClient {
 
@@ -44,7 +44,6 @@ class AwsClient {
                     SubnetId: 'subnet-1aab8632'
                 }
             ],
-            UserData: usrData,
             MinCount: 1,
             MaxCount: 1
         };
@@ -58,35 +57,30 @@ class AwsClient {
         params.Dimensions[0].Value = instanceId;
         params.MetricName = metric;
 
-        this.cloudWatch.listMetrics(params, function(err, data) {
-            if (err) {
-                console.log(err);
-                return;
-            }
-
-            console.log(data);
-        });
+        this.cloudWatch.listMetrics(params, callback);
     }
 
     createEc2Instance(instanceType, callback) {
         let params = this.ec2Params;
         params.InstanceType = instanceType || defaultInstanceType;
 
-        this.ec2.runInstances(params, function(err, data) {
-            if (err) {
-                console.log("Could not create instance", err);
-                return;
+        this.ec2.runInstances(params, (err, data) => {
+            if(err) {
+                callback(err);
             }
-            var instanceId = data.Instances[0].InstanceId;
-
-            if(callback) {
-                callback(instanceId);
-            }
+            callback(err, data.Instances[0])
         });
     }
 
-    getEc2BootStatus() {
+    getEc2Information(instanceId, callback) {
+        let params = { InstanceIds: [instanceId] };
 
+        this.ec2.describeInstances(params, (err, data) => {
+            if(err) {
+                callback(err);
+            }
+            callback(err, data.Reservations[0].Instances[0]);
+        });
     }
 }
 

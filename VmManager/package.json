@@ -8,6 +8,7 @@
   "dependencies": {
     "debug": "~2.2.0",
     "express": "~4.13.4",
-    "aws-sdk": "~2.7.7"
+    "aws-sdk": "~2.7.7",
+    "ssh2": "~0.5.4"
   }
 }
