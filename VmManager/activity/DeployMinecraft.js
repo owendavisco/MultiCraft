@@ -10,6 +10,10 @@ const memTotal = `$(grep 'MemTotal' /proc/meminfo | grep -o '[0-9]*')`;
 const memFree = `$(grep 'MemFree' /proc/meminfo | grep -o '[0-9]*')`;
 const runMinecraftCommand = `sudo java -jar -Xms${memFree}k -Xmx${memTotal}k minecraft_server.1.10.jar nogui`;
 
+const defaultOptions = {
+    instanceType: 't2.micro'
+};
+
 const awsClient = new AWSClient();
 
 var ec2Instance = null;
@@ -18,14 +22,15 @@ var deploymentCallback = function(err, instance) {
         console.log("Error deploying minecraft server...");
         return;
     }
-    console.log(`Deployment Completed Successfully for instance with hostname ${instance.hostname}`);
+    console.log(`Deployment Completed Successfully for instance with hostname ${instance.PublicDnsName}`);
 };
 
 function deployMinecraft(options, callback) {
     deploymentCallback = callback || deploymentCallback;
+    options = options || defaultOptions;
 
     console.log("Creating ec2 Instance");
-    awsClient.createEc2Instance('t2.micro', (err, instance) => {
+    awsClient.createEc2Instance(options.instanceType, (err, instance) => {
         if(err) {
             deploymentCallback(err);
         }
@@ -112,7 +117,7 @@ function startMinecraft(sshClient) {
             console.log(`${data}`);
             if(data.includes('Done')) {
                 console.log('New minecraft server started successfully!');
-                sshClient.close();
+                sshClient.end();
                 deploymentCallback(null, ec2Instance);
             }
         })

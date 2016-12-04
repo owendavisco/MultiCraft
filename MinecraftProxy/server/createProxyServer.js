@@ -7,7 +7,7 @@ const net = require('net');
 
 function createProxyServer(port, minecraft) {
     let minecraftServer = minecraft || { 'host':'localhost', 'port':25565 };
-    let proxyPort = port;
+    let proxyPort = port || 80;
 
     var proxyServer = new ProxyServer();
 

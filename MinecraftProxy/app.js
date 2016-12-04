@@ -66,18 +66,20 @@ function onConnection(socket) {
 
 function handleRequest(dataString) {
     var data = JSON.parse(dataString);
-    switch (data.action) {
-        case 'START':
-            console.log('Starting Minecraft Proxy Server...');
-            proxyServer = createProxyServer(proxyPort, data.content);
-            break;
-        case 'STOP':
-            console.log('Stopping Minecraft Proxy Server...');
-            proxyServer = null;
-            break;
-        case 'MIGRATE':
-            console.log('Starting Server Migration...');
-            proxyServer.migrateServer(data.content);
-            break;
+    if(data && data.action) {
+        switch (data.action) {
+            case 'START':
+                console.log('Starting Minecraft Proxy Server...');
+                proxyServer = createProxyServer(proxyPort, data.content);
+                break;
+            case 'STOP':
+                console.log('Stopping Minecraft Proxy Server...');
+                proxyServer = null;
+                break;
+            case 'MIGRATE':
+                console.log('Starting Server Migration...');
+                proxyServer.migrateServer(data.content);
+                break;
+        }
     }
 }
