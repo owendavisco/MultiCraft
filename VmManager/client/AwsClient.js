@@ -3,6 +3,7 @@
 const url = require('url');
 const AWS = require('aws-sdk');
 const fs = require('fs');
+const METRIC = require('./Metrics');
 
 const awsDefaultConfig = { region: 'us-east-1' };
 const defaultInstanceType = 't2.micro';
@@ -14,6 +15,16 @@ class AwsClient {
         let config = conf || awsDefaultConfig;
         this.ec2 = new AWS.EC2(config);
         this.cloudWatch = new AWS.CloudWatch(config);
+
+        this.cloudWatchParams = {
+            Dimensions: [
+                {
+                    Name: 'InstanceId',
+                    Value: 'STRING_VALUE'
+                },
+            ],
+            MetricName: METRIC.CPUUtilization
+        };
 
         this.ec2Params = {
             ImageId: 'ami-b73b63a0',
@@ -39,8 +50,22 @@ class AwsClient {
         };
     }
 
-    getMetric(metric) {
+    getMetric(instanceId, metric, callback) {
+        if (!instanceId || !metric) {
+            throw new Error('Both Instance Id and metric type are required');
+        }
+        let params = this.cloudWatchParams;
+        params.Dimensions[0].Value = instanceId;
+        params.MetricName = metric;
 
+        this.cloudWatch.listMetrics(params, function(err, data) {
+            if (err) {
+                console.log(err);
+                return;
+            }
+
+            console.log(data);
+        });
     }
 
     createEc2Instance(instanceType, callback) {
