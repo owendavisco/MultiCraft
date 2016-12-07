@@ -48,8 +48,8 @@ class ProxyServer extends EventEmitter {
         self.socketServer.listen(port);
     }
 
-    migrateServer(newServer) {
-        this.emit('migrateServer', newServer);
+    migrateServer(newServer, callback) {
+        this.emit('migrateServer', newServer, callback);
     }
 }
 

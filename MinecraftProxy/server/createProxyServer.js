@@ -5,18 +5,20 @@ const BasePacket = require('../packet/BasePacket');
 const VarNum = require('../packet/dataTypes/VarNum');
 const net = require('net');
 
-function createProxyServer(port, minecraft) {
+function createProxyServer(port, minecraft, createCallback) {
     let minecraftServer = minecraft || { 'host':'localhost', 'port':25565 };
     let proxyPort = port || 80;
 
     var proxyServer = new ProxyServer();
 
     proxyServer.listen(proxyPort, minecraftServer);
+
+    createCallback(null, `Listening on port ${proxyPort}`);
     console.log(`Listening on port ${proxyPort}`);
 
     proxyServer.on('connection', handleConnPipeline);
 
-    proxyServer.on('migrateServer', (newServerOptions) => {
+    proxyServer.on('migrateServer', (newServerOptions, migrateCallback) => {
         let currentConnection;
         let newServer, oldServer;
         proxyServer.minecraftServer = newServerOptions;
@@ -33,7 +35,7 @@ function createProxyServer(port, minecraft) {
 
             currentConnection.server = newServer;
 
-            handleClientLogin(currentConnection.client, currentConnection.server);
+            handleClientLogin(currentConnection.client, currentConnection.server, migrateCallback);
         }
     });
 
@@ -52,7 +54,7 @@ function bufferClientWrites(client, oldServer) {
     });
 }
 
-function handleClientLogin(client, server) {
+function handleClientLogin(client, server, migrateCallback) {
     let isComplete = false;
     let currentPackets = 0;
 
@@ -68,6 +70,7 @@ function handleClientLogin(client, server) {
             client.packetBuffer = [];
             isComplete = true;
 
+            migrateCallback(null, 'Client server migration completed!');
             console.log('Client server migration completed!');
         }
         currentPackets++;

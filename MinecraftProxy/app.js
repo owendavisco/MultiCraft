@@ -5,9 +5,7 @@ var child_process = require('child_process');
 var path = require('path');
 var net = require('net');
 
-var app = express();
 var port = normalizePort(process.env.PORT || '3000');
-app.set('port', port);
 
 function normalizePort(val) {
     var port = parseInt(val, 10);
@@ -61,16 +59,33 @@ function onListening() {
 }
 
 function onConnection(socket) {
-    socket.on('data', handleRequest);
+    socket.on('data', (dataString) => {
+        handleRequest(dataString, (err, data) => {
+            if(err) {
+                var response = {
+                    responseCode: 'FAILED',
+                    message: err
+                }
+                socket.write(JSON.stringify(response));
+            }
+            else {
+                var response = {
+                    responseCode: 'COMPLETED',
+                    message: data
+                }
+                socket.write(JSON.stringify(response));
+            }
+        })
+    });
 }
 
-function handleRequest(dataString) {
+function handleRequest(dataString, callback) {
     var data = JSON.parse(dataString);
     if(data && data.action) {
         switch (data.action) {
             case 'START':
                 console.log('Starting Minecraft Proxy Server...');
-                proxyServer = createProxyServer(proxyPort, data.content);
+                proxyServer = createProxyServer(proxyPort, data.content, callback);
                 break;
             case 'STOP':
                 console.log('Stopping Minecraft Proxy Server...');
@@ -78,7 +93,7 @@ function handleRequest(dataString) {
                 break;
             case 'MIGRATE':
                 console.log('Starting Server Migration...');
-                proxyServer.migrateServer(data.content);
+                proxyServer.migrateServer(data.content, callback);
                 break;
         }
     }
