@@ -7,7 +7,6 @@ const METRIC = require('./Metrics');
 
 const awsDefaultConfig = { region: 'us-east-1' };
 const defaultInstanceType = 't2.micro';
-// const usrData = new Buffer(fs.readFileSync('./script/Startup.sh')).toString('base64');
 
 class AwsClient {
 
@@ -27,7 +26,7 @@ class AwsClient {
         };
 
         this.ec2Params = {
-            ImageId: 'ami-b73b63a0',
+            ImageId: 'ami-aaeaedbd',
             InstanceType: defaultInstanceType,
             Monitoring: {
                 Enabled: true
@@ -44,6 +43,9 @@ class AwsClient {
                     SubnetId: 'subnet-1aab8632'
                 }
             ],
+            IamInstanceProfile: {
+                Arn: 'arn:aws:iam::803026361943:instance-profile/MinecraftServer'
+            },
             MinCount: 1,
             MaxCount: 1
         };
@@ -67,6 +69,7 @@ class AwsClient {
         this.ec2.runInstances(params, (err, data) => {
             if(err) {
                 callback(err);
+                return;
             }
             callback(err, data.Instances[0])
         });
@@ -78,6 +81,7 @@ class AwsClient {
         this.ec2.describeInstances(params, (err, data) => {
             if(err) {
                 callback(err);
+                return;
             }
             callback(err, data.Reservations[0].Instances[0]);
         });

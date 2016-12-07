@@ -20,6 +20,7 @@ var ec2Instance = null;
 var deploymentCallback = function(err, instance) {
     if(err) {
         console.log("Error deploying minecraft server...");
+        console.log(err.message);
         return;
     }
     console.log(`Deployment Completed Successfully for instance with hostname ${instance.PublicDnsName}`);
@@ -33,6 +34,7 @@ function deployMinecraft(options, callback) {
     awsClient.createEc2Instance(options.instanceType, (err, instance) => {
         if(err) {
             deploymentCallback(err);
+            return;
         }
         getInstanceIp(instance.InstanceId, configureVm);
     });
