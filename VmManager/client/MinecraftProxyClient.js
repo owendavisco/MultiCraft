@@ -14,17 +14,17 @@ class MinecraftProxyClient {
         this.proxyConnection = net.createConnection(port, hostnameIp, callback || () => {
             console.log(`Connected to proxy server with hostname or ip ${hostnameIp}`);
         });
-        this.proxyConnection.on('end', () => {
+        this.proxyConnection.on('error', () => {
             console.log('Connection with proxy server lost');
         });
     }
 
     startProxyServer(minecraftHostnameIp, minecraftPort, callback) {
+        minecraftPort = minecraftPort || 25565
         let jsonRequest = {
             action: Actions.START,
             content: {
-                host: minecraftHostnameIp,
-                port: minecraftPort || 25565
+                host: `${minecraftHostnameIp}:${minecraftPort}`
             }
         }
         this.proxyConnection.write(JSON.stringify(jsonRequest));
@@ -34,11 +34,11 @@ class MinecraftProxyClient {
     }
 
     migrateProxyServer(minecraftHostnameIp, minecraftPort, callback) {
+        minecraftPort = minecraftPort || 25565
         let jsonRequest = {
             action: Actions.MIGRATE,
             content: {
-                host: minecraftHostnameIp,
-                port: minecraftPort || 25565
+                host: `${minecraftHostnameIp}:${minecraftPort}`
             }
         }
         this.proxyConnection.write(JSON.stringify(jsonRequest));
