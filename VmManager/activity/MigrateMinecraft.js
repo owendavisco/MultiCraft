@@ -8,7 +8,7 @@ function migrateMinecraft(instanceType, proxyClient, callback) {
     }
 
     deployMinecraft({ instanceType: instanceType }, (err, ec2Instance) => {
-        proxyClient.migrateProxyServer(ec2Instance.PublicDnsName, 25565, callback);
+        proxyClient.migrateProxyServer(ec2Instance.PublicDnsName, 25565, 25564, callback);
     });
 }
 

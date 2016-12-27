@@ -53,7 +53,7 @@ func handleAndrossRequests(conn net.Conn) {
 			switch msg.Action {
 
 			case message.ACTION_START :
-				port, err := server.StartProxyServer(msg.Content["host"])
+				port, err := server.StartProxyServer(msg.Content["host"], msg.Content["port"], msg.Content["rconPort"])
 				if err != nil {
 					response = buildAndrossResponse(message.RESPONSE_FAILED, fmt.Sprintf(startFailedMsg, err.Error()))
 				} else {
@@ -64,7 +64,7 @@ func handleAndrossRequests(conn net.Conn) {
 				break
 
 			case message.ACTION_MIGRATE :
-				err := server.MigrateProxyServer(msg.Content["host"])
+				err := server.MigrateProxyServer(msg.Content["host"], msg.Content["port"], msg.Content["rconPort"])
 				if err != nil {
 					response = buildAndrossResponse(message.RESPONSE_FAILED, fmt.Sprintf(migrateFailedMsg, err.Error()))
 				} else {

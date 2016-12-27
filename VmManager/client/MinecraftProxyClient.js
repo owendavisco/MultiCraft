@@ -19,12 +19,15 @@ class MinecraftProxyClient {
         });
     }
 
-    startProxyServer(minecraftHostnameIp, minecraftPort, callback) {
-        minecraftPort = minecraftPort || 25565
+    startProxyServer(minecraftHostnameIp, minecraftPort, rconPort, callback) {
+        minecraftPort = minecraftPort || 25565;
+        rconPort = rconPort || 25564;
         let jsonRequest = {
             action: Actions.START,
             content: {
-                host: `${minecraftHostnameIp}:${minecraftPort}`
+                host: `${minecraftHostnameIp}`,
+                port: `${minecraftPort}`,
+                rconPort: `${rconPort}`
             }
         }
         this.proxyConnection.write(JSON.stringify(jsonRequest));
@@ -33,12 +36,15 @@ class MinecraftProxyClient {
         });
     }
 
-    migrateProxyServer(minecraftHostnameIp, minecraftPort, callback) {
-        minecraftPort = minecraftPort || 25565
+    migrateProxyServer(minecraftHostnameIp, minecraftPort, rconPort, callback) {
+        minecraftPort = minecraftPort || 25565;
+        rconPort = rconPort || 25564;
         let jsonRequest = {
             action: Actions.MIGRATE,
             content: {
-                host: `${minecraftHostnameIp}:${minecraftPort}`
+                host: `${minecraftHostnameIp}`,
+                port: `${minecraftPort}`,
+                rconPort: `${rconPort}`
             }
         }
         this.proxyConnection.write(JSON.stringify(jsonRequest));

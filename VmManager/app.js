@@ -8,7 +8,7 @@ var migrateMinecraft = require('./activity/MigrateMinecraft');
 var deployMinecraft = require('./activity/DeployMinecraft');
 
 var proxyClient = new ProxyClient('localhost', 3000, () => {
-    proxyClient.startProxyServer('ec2-54-152-190-177.compute-1.amazonaws.com', 25565, (err, data) => {
+    proxyClient.startProxyServer('ec2-54-144-195-85.compute-1.amazonaws.com', 25565, 25575, (err, data) => {
         if(err) {
             console.log(`Error when starting minecraft proxy: ${err}`);
             return;
@@ -28,16 +28,16 @@ var proxyClient = new ProxyClient('localhost', 3000, () => {
 //     })
 // }, 120000);
 
-setTimeout(() => {
-    console.log('VM migration started');
-    migrateMinecraft('t2.micro', proxyClient, (data, err) => {
-        if(err) {
-            console.log(`Error when migrating minecraft proxy: ${err}`);
-            return;
-        }
-        console.log('Minecraft proxy migrated servers successfully');
-    });
-}, 30000);
+// setTimeout(() => {
+//     console.log('VM migration started');
+//     migrateMinecraft('t2.micro', proxyClient, (data, err) => {
+//         if(err) {
+//             console.log(`Error when migrating minecraft proxy: ${err}`);
+//             return;
+//         }
+//         console.log('Minecraft proxy migrated servers successfully');
+//     });
+// }, 60000);
 
 //deployMinecraft();
 

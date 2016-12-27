@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 	"encoding/binary"
+	"../client"
 )
 
 // TODO: States should be used with mutex
@@ -25,11 +26,21 @@ const (
 var state = IDLE
 var connections = make(map[int]*ProxySession)
 var minecraftServerAddress = "locahost:25565"
+var minecraftRconAddress = "localhost:25575"
+var rconClient *client.MinecraftRconClient
 
-func StartProxyServer(serverAddress string) (string, error) {
+func StartProxyServer(serverHostname string, serverPort string, rconPort string) (string, error) {
 	state = STARTING
 	fmt.Println("Proxy Server Starting")
-	minecraftServerAddress = serverAddress
+	minecraftServerAddress = fmt.Sprintf("%s:%s", serverHostname, serverPort)
+	minecraftRconAddress = fmt.Sprintf("%s:%s", serverHostname, rconPort)
+
+	serverRcon, err := client.NewRconClient(minecraftRconAddress)
+	if err != nil {
+		fmt.Println("Error with connection to minecraft server rcon: ", err.Error())
+		return "", err
+	}
+	rconClient = serverRcon
 
 	ln, err := net.Listen(CONN_TYPE, fmt.Sprintf("%s:%s", CONN_HOST, CONN_PORT))
 	if err != nil {
@@ -45,26 +56,18 @@ func handleNewClients(ln net.Listener) error {
 
 	sessionId := 0
 
-	loginPackets := make([][]byte, 2)
-	clientBuffer := make([]byte, 256)
 	for state != STOPPING {
 		if state == RUNNING {
 			clientConn, err := ln.Accept()
 			if err != nil {
 				fmt.Println("Error with connection to client: ", err.Error())
+				continue
 			}
 
-			for i := 0; i < 2; {
-				reqLen, err := clientConn.Read(clientBuffer)
-				if err != nil {
-					return err
-				}
-				if reqLen > 0 {
-					data := make([]byte, reqLen)
-					copy(data, clientBuffer[:reqLen])
-					loginPackets[i] = data
-					i++
-				}
+			loginPackets, err := readLoginPackets(clientConn)
+			if err != nil {
+				fmt.Println("Error parsing client login packets: ", err.Error())
+				continue
 			}
 
 			fmt.Println("Client Login Read: ", loginPackets[0])
@@ -75,6 +78,7 @@ func handleNewClients(ln net.Listener) error {
 				fmt.Println("Error with connection to minecraft server: ", err.Error())
 				return err
 			}
+
 			serverConn.Write(loginPackets[0])
 			serverConn.Write(loginPackets[1])
 
@@ -103,6 +107,35 @@ func handleNewClients(ln net.Listener) error {
 		}
 	}
 	return nil
+}
+
+// TODO: Improve upon logic
+func readLoginPackets(conn net.Conn) ([][]byte, error) {
+	loginPackets := make([][]byte, 2)
+	packetCount := 0
+	buf := make([]byte, 256)
+	for packetCount < 2 {
+		n, err := conn.Read(buf)
+		if err != nil {
+			fmt.Println("Error waiting for login requests")
+			return nil, err
+		}
+
+		currentPacket := make([]byte, n)
+		copy(currentPacket, buf[:n])
+		packetSize, _ := binary.Uvarint(currentPacket)
+		loginPackets[packetCount] = currentPacket[:packetSize + 1]
+		packetCount++
+
+		for len(currentPacket) > int(packetSize + 1) && packetCount < 2 {
+			currentPacket := currentPacket[packetSize:]
+			packetSize, _ = binary.Uvarint(currentPacket)
+			loginPackets[packetCount] = currentPacket[:packetSize + 1]
+			packetCount++
+		}
+	}
+
+	return loginPackets, nil
 }
 
 func createPipeline(session *ProxySession) {
@@ -182,9 +215,10 @@ func createBufferedConnChan(conn net.Conn, packetBufSize int, chanBufSize int) c
 	return connChan
 }
 
-func MigrateProxyServer(newServerAddress string) error {
+func MigrateProxyServer(newServerHostname string, newServerPort string, newRconPort string) error {
 	fmt.Println("Proxy Server Migrating Users")
-	minecraftServerAddress = newServerAddress
+	minecraftServerAddress = fmt.Sprintf("%s:%s", newServerHostname, newServerPort)
+	minecraftRconAddress = fmt.Sprintf("%s:%s", newServerHostname, newRconPort)
 	var wg sync.WaitGroup
 
 	state = MIGRATING
@@ -200,6 +234,7 @@ func MigrateProxyServer(newServerAddress string) error {
 	return nil
 }
 
+//TODO: implement minecraft ssl handshake
 func waitForLoginCompletion(conn net.Conn) {
 	packetCount := 0
 	buf := make([]byte, 2048)
